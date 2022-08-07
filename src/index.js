@@ -56,25 +56,24 @@ export const actions = {
     };
   },
 
-  async gate (ctx) {
-    // get token
-    const token = path(['params', 'headers', 'authorization'], ctx);
+  async parse(ctx) {
+    const user = await this.parseAndGetUser(ctx);
+    if (!user)
+      return this.forbidden();
 
-    if (!token) { return this.forbidden(); }
-
-    const [authType, authToken] = token.split(' ');
-    let user;
-
-    // validate token
-    if (authType === 'Bearer') {
-      const rel = await verifyToken(authToken, this.settings.secret);
-      if (rel) {
-        const res = await ctx.call('model.get', { id: rel.id });
-        if (res.data) { user = res.data; }
+    return {
+      status: 200,
+      body: {
+        status: 'success',
+        data: user
       }
     }
+  },
 
-    if (!user) { return this.forbidden(); }
+  async gate (ctx) {
+    const user = await this.parseAndGetUser(ctx);
+    if (!user)
+      return this.forbidden();
 
     // validate permissions
     const metaPerm = ctx.meta.perm || {};
@@ -105,12 +104,11 @@ export const actions = {
 export const hooks = {
   before: {
     async '*' ({ meta, params }) {
-      meta.schema = clone(meta.authSchema);
+      meta.schema = meta.authSchema;
 
       if (!meta.schema) { throw new Error('authSchema must be defined'); }
 
       const identityFields = ['_id', ...(meta.schema.identities || [])];
-      delete meta.schema.identities;
 
       params.identities = identityFields;
     }
@@ -126,5 +124,26 @@ export const methods = {
         data: [{ type: 'general', message: 'forbidden' }]
       }
     };
+  },
+
+  async parseAndGetUser(ctx) {
+    // get token
+    const token = path(['params', 'headers', 'authorization'], ctx);
+
+    if (!token) { return null }
+
+    const [authType, authToken] = token.split(' ');
+    let user;
+
+    // validate token
+    if (authType === 'Bearer') {
+      const rel = await verifyToken(authToken, this.settings.secret);
+      if (rel) {
+        const res = await ctx.call('model.get', { id: rel.id });
+        if (res.data) { return res.data; }
+      }
+    }
+
+    return null;
   }
 };
