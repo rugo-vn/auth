@@ -70,6 +70,18 @@ export const actions = {
     }
   },
 
+  validate(ctx){
+    const { metaPerm, user } = ctx.params;
+
+    return {
+      status: 200,
+      body: {
+        status: 'success',
+        data: this.validatePerm(metaPerm, user)
+      }
+    }
+  },
+
   async gate (ctx) {
     const user = await this.parseAndGetUser(ctx);
     if (!user)
@@ -80,22 +92,8 @@ export const actions = {
 
     if (Object.keys(metaPerm).length === 0) { return null; }
 
-    for (const userPerm of user.perms || []) {
-      let isMatch = true;
-
-      for (const key in metaPerm) {
-        if (userPerm[key] === '*') { continue; }
-
-        if (userPerm[key] === metaPerm[key]) { continue; }
-
-        isMatch = false;
-        break;
-      }
-
-      if (isMatch) {
-        return null;
-      }
-    }
+    if (this.validatePerm(metaPerm, user))
+      return null;
 
     return this.forbidden();
   }
@@ -103,7 +101,7 @@ export const actions = {
 
 export const hooks = {
   before: {
-    async '*' ({ meta, params }) {
+    async all({ meta, params }) {
       meta.schema = meta.authSchema;
 
       if (!meta.schema) { throw new Error('authSchema must be defined'); }
@@ -145,5 +143,26 @@ export const methods = {
     }
 
     return null;
+  },
+
+  validatePerm(metaPerm, user){
+    for (const userPerm of user.perms || []) {
+      let isMatch = true;
+
+      for (const key in metaPerm) {
+        if (userPerm[key] === '*') { continue; }
+
+        if (userPerm[key] === metaPerm[key]) { continue; }
+
+        isMatch = false;
+        break;
+      }
+
+      if (isMatch) {
+        return true;
+      }
+    }
+
+    return false;
   }
 };
