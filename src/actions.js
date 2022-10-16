@@ -49,7 +49,7 @@ export const gate = async function ({ token, apikey, auth, schema }) {
   if (authType === 'Bearer') {
     const rel = await verifyToken(authToken, this.secret);
     if (rel) {
-      const resp = await this.call('model.get', { id: rel.id });
+      const resp = await this.call('model.get', { id: rel.id, schema });
       user = resp.data;
     }
   }
