@@ -38,3 +38,12 @@ export const validatePerm = (metaPerm, perms) => {
 
   return false;
 };
+
+export const authSchema = {
+  type: 'object',
+  properties: {
+    password: { type: 'string' },
+    apikey: { type: 'string' },
+    perms: { type: 'array', items: { type: 'object' } },
+  }
+}
