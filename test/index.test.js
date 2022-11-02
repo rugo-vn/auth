@@ -5,10 +5,13 @@ import { expect } from 'chai';
 import { createBroker } from '@rugo-vn/service';
 import { PASSWORD_SALT } from '../src/utils.js';
 
+const DEFAULT_SCHEMA = {
+  _name: 'auth',
+  _acl: ['create'],
+};
+
 const DEFAULT_SETTINGS = {
-  schema: {
-    _acl: ['create'],
-  }
+  model: DEFAULT_SCHEMA._name,
 };
 
 const DEMO_USER_DOC = { username: 'foo', password: '123456' };
@@ -38,6 +41,9 @@ describe('Api test', () => {
       _services: [
         './src/index.js',
       ],
+      _globals: {
+        [`schema.${DEFAULT_SCHEMA._name}`]: DEFAULT_SCHEMA,
+      },
       auth: {
         secret: 'thisisasecret',
       }
@@ -70,10 +76,11 @@ describe('Api test', () => {
   it('should login and gate', async () => {
     const resp = await broker.call('auth.login', {
       data: DEMO_USER_DOC,
+      ...DEFAULT_SETTINGS,
     });
     expect(resp).to.not.eq(null);
 
-    const resp2 = await broker.call('auth.gate', { token: `Bearer ${resp}` });
+    const resp2 = await broker.call('auth.gate', { token: `Bearer ${resp}`, ...DEFAULT_SETTINGS, });
     expect(resp2).to.has.property('username', 'foo');
   });
 });

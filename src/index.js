@@ -4,6 +4,7 @@ import { path } from 'ramda';
 export const name = 'auth';
 
 export * as actions from './actions.js';
+export * as hooks from './hooks.js';
 
 export const started = function () {
   this.secret = path(['settings', 'auth', 'secret'], this);

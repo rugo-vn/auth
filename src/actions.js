@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import { ForbiddenError } from './exceptions.js';
 import { PASSWORD_SALT, SecureResp, validatePerm, verifyToken } from './utils.js';
 
-export const register = async function ({ data, schema }) {
+export const register = async function ({ data, schema, model }) {
   if ((schema._acl || []).indexOf('create') === -1) { throw new ForbiddenError('Not allow to register new user'); }
 
   const password = data.password;
@@ -15,16 +15,16 @@ export const register = async function ({ data, schema }) {
 
   if (password) { data.password = bcrypt.hashSync(password, PASSWORD_SALT); }
 
-  const { data: returnData } = await this.call('model.create', { data, schema });
+  const { data: returnData } = await this.call('model.create', { data, name: model });
   return SecureResp(returnData);
 };
 
-export const login = async function ({ data, schema }) {
+export const login = async function ({ data, model }) {
   const password = data.password;
 
   delete data.password;
 
-  const { data: { 0: user } } = await this.call('model.find', { query: data, schema });
+  const { data: { 0: user } } = await this.call('model.find', { query: data, name: model });
 
   if (!user) { throw new ForbiddenError('Your identity or password is wrong'); }
 
@@ -39,7 +39,7 @@ export const login = async function ({ data, schema }) {
   return token;
 };
 
-export const gate = async function ({ token, apikey, auth, schema }) {
+export const gate = async function ({ token, apikey, auth, model }) {
   if (!token) { return null; }
 
   const [authType, authToken] = token.split(' ');
@@ -49,7 +49,7 @@ export const gate = async function ({ token, apikey, auth, schema }) {
   if (authType === 'Bearer') {
     const rel = await verifyToken(authToken, this.secret);
     if (rel) {
-      const resp = await this.call('model.get', { id: rel.id, schema });
+      const resp = await this.call('model.get', { id: rel.id, name: model });
       user = resp.data;
     }
   }

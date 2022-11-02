@@ -44,6 +44,6 @@ export const authSchema = {
   properties: {
     password: { type: 'string' },
     apikey: { type: 'string' },
-    perms: { type: 'array', items: { type: 'object' } },
+    perms: { type: 'array', items: { type: 'object' } }
   }
-}
+};

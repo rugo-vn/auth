@@ -16,15 +16,19 @@ const settings = {
 
 ## Common
 
+### Globals
+
+- `schema.<modelName>`
+
 ### Input Args
 
 It take some variables:
 
-- `schema` Using for get users from model.
+- `model` Using for get users from model.
 
 ### Schema
 
-It's using `schema` which must have following fields:
+It's using the `schema` of `model` which must have following fields:
 
 ```js
 {
