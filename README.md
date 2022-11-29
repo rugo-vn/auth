@@ -10,6 +10,7 @@ Authentication and Authorization.
 const settings = {
   auth: {
     secret: /* secret string, using for encrypt */,
+    model: /* model name to use validation */,
   }
 }
 ```
@@ -19,12 +20,6 @@ const settings = {
 ### Globals
 
 - `schema.<modelName>`
-
-### Input Args
-
-It take some variables:
-
-- `model` Using for get users from model.
 
 ### Schema
 
@@ -40,7 +35,7 @@ It's using the `schema` of `model` which must have following fields:
 }
 ```
 
-These fields cannot create directly by `register` action.
+You can got this from `_ref: 'user'`.
 
 ## Actions
 

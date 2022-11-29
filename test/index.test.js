@@ -1,17 +1,13 @@
 /* eslint-disable */
 
 import bcrypt from 'bcryptjs';
-import { expect } from 'chai';
+import { assert, expect } from 'chai';
 import { createBroker } from '@rugo-vn/service';
 import { PASSWORD_SALT } from '../src/utils.js';
 
 const DEFAULT_SCHEMA = {
-  _name: 'auth',
-  _acl: ['create'],
-};
-
-const DEFAULT_SETTINGS = {
-  model: DEFAULT_SCHEMA._name,
+  name: 'auth',
+  acl: ['create'],
 };
 
 const DEMO_USER_DOC = { username: 'foo', password: '123456' };
@@ -28,7 +24,13 @@ const modelService = {
     },
 
     async get(){
-      return { data: { ...DEMO_USER_DOC, password: bcrypt.hashSync(DEMO_USER_DOC.password, PASSWORD_SALT)} };
+      return { data: {
+        ...DEMO_USER_DOC,
+        password: bcrypt.hashSync(DEMO_USER_DOC.password, PASSWORD_SALT),
+        perms: [
+          { model: DEFAULT_SCHEMA.name, action: '*', id: '*' },
+        ]
+      }};
     }
   },
 };
@@ -42,10 +44,11 @@ describe('Api test', () => {
         './src/index.js',
       ],
       _globals: {
-        [`schema.${DEFAULT_SCHEMA._name}`]: DEFAULT_SCHEMA,
+        [`schema.${DEFAULT_SCHEMA.name}`]: DEFAULT_SCHEMA,
       },
       auth: {
         secret: 'thisisasecret',
+        model: DEFAULT_SCHEMA.name,
       }
     });
 
@@ -66,9 +69,8 @@ describe('Api test', () => {
         perms: [
           { model: 'users', action: '*' },
         ]
-      },
-      ...DEFAULT_SETTINGS }
-    );
+      }
+    });
 
     expect(resp).to.has.property('username', 'foo');
   });
@@ -76,11 +78,21 @@ describe('Api test', () => {
   it('should login and gate', async () => {
     const resp = await broker.call('auth.login', {
       data: DEMO_USER_DOC,
-      ...DEFAULT_SETTINGS,
     });
     expect(resp).to.not.eq(null);
 
-    const resp2 = await broker.call('auth.gate', { token: `Bearer ${resp}`, ...DEFAULT_SETTINGS, });
+    const resp2 = await broker.call('auth.gate', { token: `Bearer ${resp}`, });
     expect(resp2).to.has.property('username', 'foo');
+
+    const resp3 = await broker.call('auth.gate', { token: `Bearer ${resp}`, auth: { model: DEFAULT_SCHEMA.name, action: 'abc' } });
+    expect(resp3).to.has.property('username', 'foo');
+
+    const resp4 = await broker.call('auth.gate', { token: `Bearer ${resp}`, auth: { model: 'nomodel', action: 'abc', id: 'ghi' } });
+    expect(resp4).to.be.eq(null);
+  });
+
+  it('should wrong token', async () => {
+    const resp = await broker.call('auth.gate', { token: `Bearer wrongtoken`, });
+    expect(resp).to.be.eq(null);
   });
 });
