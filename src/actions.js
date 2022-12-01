@@ -5,7 +5,7 @@ import { ForbiddenError } from '@rugo-vn/exception';
 import { PASSWORD_SALT, SecureResp, validatePerm, verifyToken } from './utils.js';
 
 export const register = async function ({ data, schema }) {
-  if ((schema.acl || []).indexOf('create') === -1) { throw new ForbiddenError('Not allow to register new user'); }
+  if ((schema.acls || []).indexOf('create') === -1) { throw new ForbiddenError('Not allow to register new user'); }
 
   const password = data.password;
 

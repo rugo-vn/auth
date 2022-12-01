@@ -7,7 +7,7 @@ import { PASSWORD_SALT } from '../src/utils.js';
 
 const DEFAULT_SCHEMA = {
   name: 'auth',
-  acl: ['create'],
+  acls: ['create'],
 };
 
 const DEMO_USER_DOC = { username: 'foo', password: '123456' };

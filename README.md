@@ -41,7 +41,7 @@ You can got this from `_ref: 'user'`.
 
 ### `register`
 
-If `schema` has `_acl` contains `create` action, it will allow register a new user.
+If `schema` has `acls` contains `create` action, it will allow register a new user.
 
 Arguments:
 
