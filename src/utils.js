@@ -3,9 +3,11 @@ import jwt from 'jsonwebtoken';
 export const PASSWORD_SALT = 10;
 
 export const SecureResp = (doc) => {
+  if (!doc)
+    return null;
+
   delete doc.password;
   delete doc.apikey;
-  delete doc.perms;
 
   return doc;
 };

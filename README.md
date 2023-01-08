@@ -4,26 +4,25 @@ Authentication and Authorization.
 
 ## Overview
 
+It requires `@rugo-vn/db`.
+
 ## Settings
 
 ```js
 const settings = {
   auth: {
     secret: /* secret string, using for encrypt */,
-    model: /* model name to use validation */,
+    spaceId: /* space id of users */,
+    tableName: /* table name of users */,
   }
 }
 ```
 
 ## Common
 
-### Globals
-
-- `schema.<modelName>`
-
 ### Schema
 
-It's using the `schema` of `model` which must have following fields:
+It's using the `schema` which must have following fields:
 
 ```js
 {
@@ -35,45 +34,43 @@ It's using the `schema` of `model` which must have following fields:
 }
 ```
 
-You can got this from `_ref: 'user'`.
-
 ## Actions
 
 ### `register`
 
-If `schema` has `acls` contains `create` action, it will allow register a new user.
+Arguments: 
 
-Arguments:
-
-- `{object} data` a form to create a user, it should have `password` or `apikey`.
+- `data` (type: `object`) form data to register.
 
 Return:
 
-- `{boolean}` return `true` if create successfully.
+- (type: `object`) row object of user registerd.
 
 ### `login`
 
 Arguments:
 
-- `{object} data` a query data, it should have `password` or `apikey`.
+- `data` (type: `object`) form data to login, it should have `password` or `apikey`.
 
 Return:
 
-- `{string} token` JWT token.
+- (type: `string`) JWT token.
 
 ### `gate`
 
-Check `token` or `apikey` valid.
+- Parse/check token and get user.
+- Validate user's perms.  
 
 Arguments:
 
 - `token`
 - `apikey`
 - `auth` Auth object for authorization.
+- `perms` Default perms when user not existed.
 
 Return:
 
-- `{object} user` user info or `null`.
+- (type: `object`) user info or `null`.
 
 ## License
 

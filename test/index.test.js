@@ -12,11 +12,11 @@ const DEFAULT_SCHEMA = {
 
 const DEMO_USER_DOC = { username: 'foo', password: '123456' };
 
-const modelService = {
-  name: 'model',
+const dbService = {
+  name: 'db',
   actions: {
     async create({ data }){
-      return { data };
+      return data;
     },
 
     async find() {
@@ -24,13 +24,13 @@ const modelService = {
     },
 
     async get(){
-      return { data: {
+      return {
         ...DEMO_USER_DOC,
         password: bcrypt.hashSync(DEMO_USER_DOC.password, PASSWORD_SALT),
         perms: [
-          { model: DEFAULT_SCHEMA.name, action: '*', id: '*' },
+          { spaceId: 'demo', tableName: 'foo', action: '*', id: '*' },
         ]
-      }};
+      };
     }
   },
 };
@@ -43,17 +43,15 @@ describe('Api test', () => {
       _services: [
         './src/index.js',
       ],
-      _globals: {
-        [`schema.${DEFAULT_SCHEMA.name}`]: DEFAULT_SCHEMA,
-      },
       auth: {
         secret: 'thisisasecret',
-        model: DEFAULT_SCHEMA.name,
+        spaceId: 'demo',
+        tableName: 'foo',
       }
     });
 
     await broker.loadServices();
-    await broker.createService(modelService);
+    await broker.createService(dbService);
     await broker.start();
   });
 
@@ -84,15 +82,26 @@ describe('Api test', () => {
     const resp2 = await broker.call('auth.gate', { token: `Bearer ${resp}`, });
     expect(resp2).to.has.property('username', 'foo');
 
-    const resp3 = await broker.call('auth.gate', { token: `Bearer ${resp}`, auth: { model: DEFAULT_SCHEMA.name, action: 'abc' } });
+    const resp3 = await broker.call('auth.gate', { token: `Bearer ${resp}`, auth: { spaceId: 'demo', tableName: 'foo', action: 'abc' } });
     expect(resp3).to.has.property('username', 'foo');
 
-    const resp4 = await broker.call('auth.gate', { token: `Bearer ${resp}`, auth: { model: 'nomodel', action: 'abc', id: 'ghi' } });
-    expect(resp4).to.be.eq(null);
+    try {
+      await broker.call('auth.gate', { token: `Bearer ${resp}`, auth: { spaceId: 'nospace', action: 'abc', id: 'ghi' } });
+      assert.fail('wrong perm');
+    } catch(errs) {
+      expect(errs[0]).to.has.property('message', 'Access Denied');
+    }
   });
 
   it('should wrong token', async () => {
     const resp = await broker.call('auth.gate', { token: `Bearer wrongtoken`, });
     expect(resp).to.be.eq(null);
+
+    const resp2 = await broker.call('auth.gate',{
+      token: `Bearer wrongtoken`,
+      perms: [{ spaceId: 'demo', tableName: 'foo', action: '*' }],
+      auth: { spaceId: 'demo', tableName: 'foo', action: 'abc' }
+    });
+    expect(resp2).to.be.eq(null);
   });
 });
