@@ -1,6 +1,6 @@
 {
   "name": "@rugo-vn/auth",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Authentication and Authorization.",
   "main": "./src/index.js",
   "type": "module",
@@ -25,8 +25,8 @@
     "mocha": "^10.0.0"
   },
   "dependencies": {
-    "@rugo-vn/service": "../service",
-    "@rugo-vn/exception": "../exception",
+    "@rugo-vn/exception": "^1.0.0",
+    "@rugo-vn/service": "^2.0.1",
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^8.5.1",
     "ramda": "^0.28.0"
