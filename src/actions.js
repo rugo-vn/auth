@@ -10,16 +10,7 @@ import {
 } from './utils.js';
 
 export const register = async function ({ data }) {
-  const password = data.password;
-
-  delete data.password;
-  delete data.apikey;
-  delete data.perms;
-
-  if (password) {
-    data.password = bcrypt.hashSync(password, PASSWORD_SALT);
-  }
-
+  delete data.credentials;
   const res = await this.call('db.create', { data, ...this.dbIdentity });
   return SecureResp(res);
 };
