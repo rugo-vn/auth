@@ -26,11 +26,14 @@ It's using the `schema` which must have following fields:
 
 ```js
 {
-  password: /* sha1 password hashed */,
-  apikey: /* direct key for auth from api, unique */,
-  perms: [
-    /* perm list */
-  ]
+  credentials: {
+    type: /* 'password', ... */,
+    value: /* sha1 password hashed if password */,
+    perms: [
+      /* perm list */
+    ]
+  }
+
 }
 ```
 
@@ -38,7 +41,7 @@ It's using the `schema` which must have following fields:
 
 ### `register`
 
-Arguments: 
+Arguments:
 
 - `data` (type: `object`) form data to register.
 
@@ -50,21 +53,22 @@ Return:
 
 Arguments:
 
-- `data` (type: `object`) form data to login, it should have `password` or `apikey`.
+- `data` (type: `object`) form data to login, it should have `password`.
 
 Return:
 
-- (type: `string`) JWT token.
+- (type: `string`) JWT token which have payload:
+  - `id` user's id
+  - `perms` user's permissions
 
 ### `gate`
 
 - Parse/check token and get user.
-- Validate user's perms.  
+- Validate user's perms.
 
 Arguments:
 
 - `token`
-- `apikey`
 - `auth` Auth object for authorization.
 - `perms` Default perms when user not existed.
 

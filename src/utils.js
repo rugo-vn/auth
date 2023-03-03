@@ -3,11 +3,9 @@ import jwt from 'jsonwebtoken';
 export const PASSWORD_SALT = 10;
 
 export const SecureResp = (doc) => {
-  if (!doc)
-    return null;
+  if (!doc) return null;
 
-  delete doc.password;
-  delete doc.apikey;
+  delete doc.credentials;
 
   return doc;
 };
@@ -25,9 +23,13 @@ export const validatePerm = (metaPerm, perms) => {
     let isMatch = true;
 
     for (const key in metaPerm) {
-      if (userPerm[key] === '*') { continue; }
+      if (userPerm[key] === '*') {
+        continue;
+      }
 
-      if (userPerm[key] === metaPerm[key]) { continue; }
+      if (userPerm[key] === metaPerm[key]) {
+        continue;
+      }
 
       isMatch = false;
       break;
