@@ -88,7 +88,7 @@ export const gate = async function ({ token, auth, perms = [] }) {
       const rel = await verifyToken(authToken, this.secret);
       if (rel) {
         user = await this.call('db.get', { id: rel.id, ...this.dbIdentity });
-        perms = rel.perms || [];
+        perms = [...perms, ...(rel.perms || [])];
       }
     }
   }
