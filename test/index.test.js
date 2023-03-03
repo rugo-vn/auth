@@ -69,6 +69,7 @@ describe('Api test', () => {
     });
 
     expect(resp).to.has.property('username', 'foo');
+    expect(resp).not.to.has.property('credentials');
   });
 
   it('should login and gate by password', async () => {

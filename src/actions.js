@@ -10,7 +10,20 @@ import {
 } from './utils.js';
 
 export const register = async function ({ data }) {
+  const password = data.password;
+
   delete data.credentials;
+  delete data.password;
+
+  if (password) {
+    data.credentials = [
+      {
+        type: 'password',
+        value: bcrypt.hashSync(password, PASSWORD_SALT),
+        perms: [],
+      },
+    ];
+  }
   const res = await this.call('db.create', { data, ...this.dbIdentity });
   return SecureResp(res);
 };
@@ -45,7 +58,7 @@ export const login = async function ({ data }) {
     }
 
     if (valid) {
-      perms = credential.perms;
+      perms = credential.perms || [];
       break;
     }
   }
@@ -75,7 +88,7 @@ export const gate = async function ({ token, auth, perms = [] }) {
       const rel = await verifyToken(authToken, this.secret);
       if (rel) {
         user = await this.call('db.get', { id: rel.id, ...this.dbIdentity });
-        perms = rel.perms;
+        perms = rel.perms || [];
       }
     }
   }
