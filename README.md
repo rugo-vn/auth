@@ -74,7 +74,9 @@ Arguments:
 
 Return:
 
-- (type: `object`) user info or `null`.
+- (type: `object`)
+  - `user` user info or `null`.
+  - `perms` permission extracted from token.
 
 ## License
 

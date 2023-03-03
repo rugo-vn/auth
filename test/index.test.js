@@ -79,15 +79,15 @@ describe('Api test', () => {
     expect(resp).to.not.eq(null);
 
     const resp2 = await broker.call('auth.gate', { token: `Bearer ${resp}` });
-    expect(resp2).to.has.property('username', 'foo');
-    expect(resp2).not.to.has.property('credentials');
+    expect(resp2.user).to.has.property('username', 'foo');
+    expect(resp2.user).not.to.has.property('credentials');
 
     const resp3 = await broker.call('auth.gate', {
       token: `Bearer ${resp}`,
       auth: { spaceId: 'demo', tableName: 'foo', action: 'abc' },
     });
-    expect(resp3).to.has.property('username', 'foo');
-    expect(resp3).not.to.has.property('credentials');
+    expect(resp3.user).to.has.property('username', 'foo');
+    expect(resp3.user).not.to.has.property('credentials');
 
     try {
       await broker.call('auth.gate', {
@@ -102,13 +102,13 @@ describe('Api test', () => {
 
   it('should wrong token', async () => {
     const resp = await broker.call('auth.gate', { token: `Bearer wrongtoken` });
-    expect(resp).to.be.eq(null);
+    expect(resp.user).to.be.eq(null);
 
     const resp2 = await broker.call('auth.gate', {
       token: `Bearer wrongtoken`,
       perms: [{ spaceId: 'demo', tableName: 'foo', action: '*' }],
       auth: { spaceId: 'demo', tableName: 'foo', action: 'abc' },
     });
-    expect(resp2).to.be.eq(null);
+    expect(resp2.user).to.be.eq(null);
   });
 });

@@ -93,11 +93,18 @@ export const gate = async function ({ token, auth, perms = [] }) {
     }
   }
 
-  if (!auth) return SecureResp(user);
+  if (!auth)
+    return {
+      user: SecureResp(user),
+      perms,
+    };
 
   if (!validatePerm(auth, perms)) {
     throw new ForbiddenError('Access Denied');
   }
 
-  return SecureResp(user);
+  return {
+    user: SecureResp(user),
+    perms,
+  };
 };
