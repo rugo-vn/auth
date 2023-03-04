@@ -18,7 +18,7 @@ export const register = async function ({ data }) {
   if (password) {
     data.credentials = [
       {
-        type: 'password',
+        kind: 'password',
         value: bcrypt.hashSync(password, PASSWORD_SALT),
         perms: [],
       },
@@ -49,7 +49,7 @@ export const login = async function ({ data }) {
   let valid = false;
   let perms = [];
   for (const credential of user.credentials) {
-    switch (credential.type) {
+    switch (credential.kind) {
       case 'password':
         if (bcrypt.compareSync(password, credential.value)) {
           valid = true;

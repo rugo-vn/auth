@@ -25,7 +25,7 @@ const dbService = {
         username: DEMO_USER_DOC.username,
         credentials: [
           {
-            type: 'password',
+            kind: 'password',
             value: bcrypt.hashSync(DEMO_USER_DOC.password, PASSWORD_SALT),
             perms: [
               { spaceId: 'demo', tableName: 'foo', action: '*', id: '*' },
