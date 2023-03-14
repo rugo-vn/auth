@@ -4,9 +4,6 @@ export const PASSWORD_SALT = 10;
 
 export const SecureResp = (doc) => {
   if (!doc) return null;
-
-  delete doc.credentials;
-
   return doc;
 };
 

@@ -13,28 +13,34 @@ const settings = {
   auth: {
     secret: /* secret string, using for encrypt */,
     spaceId: /* space id of users */,
-    tableName: /* table name of users */,
+    userTable: /* table name of users */,
+    keyTable: /* table name of keys */,
   }
 }
 ```
 
-## Common
+## Default
 
-### Schema
-
-It's using the `schema` which must have following fields:
+These tables should have following schema:
 
 ```js
-{
-  credentials: {
-    type: /* 'password', ... */,
-    value: /* sha1 password hashed if password */,
-    perms: [
-      /* perm list */
-    ]
-  }
+export const BASE_USER_SCHEMA = {
+  properties: {
+    credentials: {
+      items: {
+        key: { type: 'Id' },
+      },
+    },
+  },
+};
 
-}
+export const BASE_KEY_SCHEMA = {
+  properties: {
+    data: { type: 'String' },
+    hash: { type: 'String' },
+    prev: { type: 'Id' },
+  },
+};
 ```
 
 ## Actions
@@ -44,6 +50,8 @@ It's using the `schema` which must have following fields:
 Arguments:
 
 - `data` (type: `object`) form data to register.
+  - `...` user's information except `credentials`.
+  - `password` it will create a new key in `credentials`.
 
 Return:
 

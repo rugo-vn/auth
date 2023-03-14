@@ -2,12 +2,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 import { ForbiddenError } from '@rugo-vn/exception';
-import {
-  PASSWORD_SALT,
-  SecureResp,
-  validatePerm,
-  verifyToken,
-} from './utils.js';
+import { getMatchPerm } from '@rugo-vn/shared/src/permission.js';
+import { PASSWORD_SALT, SecureResp, verifyToken } from './utils.js';
 
 export const register = async function ({ data }) {
   const password = data.password;
@@ -15,17 +11,24 @@ export const register = async function ({ data }) {
   delete data.credentials;
   delete data.password;
 
+  let user = await this.call('db.create', { data, ...this.userTable });
+
   if (password) {
-    data.credentials = [
-      {
-        kind: 'password',
-        value: bcrypt.hashSync(password, PASSWORD_SALT),
-        perms: [],
+    const key = await this.call('db.create', {
+      data: {
+        hash: bcrypt.hashSync(password, PASSWORD_SALT),
       },
-    ];
+      ...this.keyTable,
+    });
+
+    user = await this.call('db.update', {
+      id: user.id,
+      set: { credentials: [{ key: key.id }] },
+      ...this.userTable,
+    });
   }
-  const res = await this.call('db.create', { data, ...this.dbIdentity });
-  return SecureResp(res);
+
+  return SecureResp(user);
 };
 
 export const login = async function ({ data }) {
@@ -36,7 +39,7 @@ export const login = async function ({ data }) {
 
   const {
     data: { 0: user },
-  } = await this.call('db.find', { filters: data, ...this.dbIdentity });
+  } = await this.call('db.find', { filters: data, ...this.userTable });
 
   if (!user) {
     throw new ForbiddenError('Your identity or password is wrong.');
@@ -47,18 +50,15 @@ export const login = async function ({ data }) {
   }
 
   let valid = false;
-  let perms = [];
-  for (const credential of user.credentials) {
-    switch (credential.kind) {
-      case 'password':
-        if (bcrypt.compareSync(password, credential.value)) {
-          valid = true;
-        }
-        break;
+  let credential;
+  for (const item of user.credentials) {
+    if (item.key) {
+      const key = await this.call('db.get', { id: item.key, ...this.keyTable });
+      if (bcrypt.compareSync(password, key.hash)) valid = true;
     }
 
     if (valid) {
-      perms = credential.perms || [];
+      credential = item;
       break;
     }
   }
@@ -68,7 +68,8 @@ export const login = async function ({ data }) {
   const token = jwt.sign(
     {
       id: user.id,
-      perms,
+      credential,
+      version: user.version,
     },
     this.secret,
     {
@@ -79,32 +80,34 @@ export const login = async function ({ data }) {
   return token;
 };
 
-export const gate = async function ({ token, auth, perms = [] }) {
-  let user;
+export const gate = async function ({ token, info, perms = [] }) {
   if (token) {
     const [authType, authToken] = token.split(' ');
 
     if (authType === 'Bearer') {
       const rel = await verifyToken(authToken, this.secret);
       if (rel) {
-        user = await this.call('db.get', { id: rel.id, ...this.dbIdentity });
-        perms = [...perms, ...(rel.perms || [])];
+        const user = await this.call('db.get', {
+          id: rel.id,
+          ...this.userTable,
+        });
+
+        if (rel.version !== user.version)
+          throw new ForbiddenError(
+            'Your session is expired. Please sign in again.'
+          );
+        perms = [...perms, ...(rel?.credential?.perms || [])];
       }
     }
   }
 
-  if (!auth)
-    return {
-      user: SecureResp(user),
-      perms,
-    };
+  if (!info) return {};
 
-  if (!validatePerm(auth, perms)) {
+  const passport = getMatchPerm(perms, info);
+
+  if (!passport) {
     throw new ForbiddenError('Access Denied');
   }
 
-  return {
-    user: SecureResp(user),
-    perms,
-  };
+  return passport;
 };

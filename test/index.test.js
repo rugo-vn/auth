@@ -4,41 +4,13 @@ import bcrypt from 'bcryptjs';
 import { assert, expect } from 'chai';
 import { createBroker } from '@rugo-vn/service';
 import { PASSWORD_SALT } from '../src/utils.js';
+import * as dbService from './db.service.js';
 
 const DEMO_USER_DOC = { username: 'foo', password: '123456' };
 
-const dbService = {
-  name: 'db',
-  actions: {
-    async create({ data }) {
-      return data;
-    },
-
-    async find() {
-      return {
-        data: [await this.call('db.get')],
-      };
-    },
-
-    async get() {
-      return {
-        username: DEMO_USER_DOC.username,
-        credentials: [
-          {
-            kind: 'password',
-            value: bcrypt.hashSync(DEMO_USER_DOC.password, PASSWORD_SALT),
-            perms: [
-              { spaceId: 'demo', tableName: 'foo', action: '*', id: '*' },
-            ],
-          },
-        ],
-      };
-    },
-  },
-};
-
 describe('Api test', () => {
   let broker;
+  let user;
 
   beforeEach(async () => {
     broker = createBroker({
@@ -46,7 +18,8 @@ describe('Api test', () => {
       auth: {
         secret: 'thisisasecret',
         spaceId: 'demo',
-        tableName: 'foo',
+        userTable: 'foo',
+        keyTable: 'bar',
       },
     });
 
@@ -63,13 +36,23 @@ describe('Api test', () => {
     const resp = await broker.call('auth.register', {
       data: {
         ...DEMO_USER_DOC,
-        apikey: '441221',
-        perms: [{ model: 'users', action: '*' }],
+        credentials: [{ model: 'users', action: '*' }],
       },
     });
 
     expect(resp).to.has.property('username', 'foo');
-    expect(resp).not.to.has.property('credentials');
+    expect(resp).to.has.property('credentials');
+
+    user = resp;
+  });
+
+  it('should grant permissions', async () => {
+    dbService.db['foo']['1']['credentials'][0].perms = [
+      {
+        model: 'users',
+        action: '*',
+      },
+    ];
   });
 
   it('should login and gate by password', async () => {
@@ -79,20 +62,20 @@ describe('Api test', () => {
     expect(resp).to.not.eq(null);
 
     const resp2 = await broker.call('auth.gate', { token: `Bearer ${resp}` });
-    expect(resp2.user).to.has.property('username', 'foo');
-    expect(resp2.user).not.to.has.property('credentials');
+    expect(resp2).to.be.deep.eq({});
 
     const resp3 = await broker.call('auth.gate', {
       token: `Bearer ${resp}`,
-      auth: { spaceId: 'demo', tableName: 'foo', action: 'abc' },
+      info: { action: 'abc' },
     });
-    expect(resp3.user).to.has.property('username', 'foo');
-    expect(resp3.user).not.to.has.property('credentials');
+
+    expect(resp3).to.has.property('model', 'users');
+    expect(resp3).to.has.property('action', '*');
 
     try {
       await broker.call('auth.gate', {
         token: `Bearer ${resp}`,
-        auth: { spaceId: 'nospace', action: 'abc', id: 'ghi' },
+        info: { spaceId: 'nospace', action: 'abc', id: 'ghi' },
       });
       assert.fail('wrong perm');
     } catch (err) {
@@ -102,13 +85,13 @@ describe('Api test', () => {
 
   it('should wrong token', async () => {
     const resp = await broker.call('auth.gate', { token: `Bearer wrongtoken` });
-    expect(resp.user).to.be.eq(null);
+    expect(resp).to.be.deep.eq({});
 
     const resp2 = await broker.call('auth.gate', {
       token: `Bearer wrongtoken`,
       perms: [{ spaceId: 'demo', tableName: 'foo', action: '*' }],
-      auth: { spaceId: 'demo', tableName: 'foo', action: 'abc' },
+      info: { spaceId: 'demo', tableName: 'foo', action: 'abc' },
     });
-    expect(resp2.user).to.be.eq(null);
+    expect(resp2).not.to.be.deep.eq({});
   });
 });
