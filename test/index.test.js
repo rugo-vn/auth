@@ -1,9 +1,7 @@
 /* eslint-disable */
 
-import bcrypt from 'bcryptjs';
 import { assert, expect } from 'chai';
 import { createBroker } from '@rugo-vn/service';
-import { PASSWORD_SALT } from '../src/utils.js';
 import * as dbService from './db.service.js';
 
 const DEMO_USER_DOC = { username: 'foo', password: '123456' };

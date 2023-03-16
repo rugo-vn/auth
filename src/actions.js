@@ -2,8 +2,9 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 import { ForbiddenError } from '@rugo-vn/exception';
-import { getMatchPerm } from '@rugo-vn/shared/src/permission.js';
-import { PASSWORD_SALT, SecureResp, verifyToken } from './utils.js';
+import { getPassport } from '@rugo-vn/shared/src/permission.js';
+import { SecureResp, verifyToken } from './utils.js';
+import { Secure } from '@rugo-vn/shared';
 
 export const register = async function ({ data }) {
   const password = data.password;
@@ -16,7 +17,8 @@ export const register = async function ({ data }) {
   if (password) {
     const key = await this.call('db.create', {
       data: {
-        hash: bcrypt.hashSync(password, PASSWORD_SALT),
+        hash: Secure.hashPassword(password),
+        user: user.id,
       },
       ...this.keyTable,
     });
@@ -54,7 +56,7 @@ export const login = async function ({ data }) {
   for (const item of user.credentials) {
     if (item.key) {
       const key = await this.call('db.get', { id: item.key, ...this.keyTable });
-      if (bcrypt.compareSync(password, key.hash)) valid = true;
+      if (Secure.comparePassword(password, key.hash)) valid = true;
     }
 
     if (valid) {
@@ -81,13 +83,15 @@ export const login = async function ({ data }) {
 };
 
 export const gate = async function ({ token, info, perms = [] }) {
+  let user, credential;
+
   if (token) {
     const [authType, authToken] = token.split(' ');
 
     if (authType === 'Bearer') {
       const rel = await verifyToken(authToken, this.secret);
       if (rel) {
-        const user = await this.call('db.get', {
+        user = await this.call('db.get', {
           id: rel.id,
           ...this.userTable,
         });
@@ -96,18 +100,22 @@ export const gate = async function ({ token, info, perms = [] }) {
           throw new ForbiddenError(
             'Your session is expired. Please sign in again.'
           );
-        perms = [...perms, ...(rel?.credential?.perms || [])];
+
+        credential = rel.credential;
+        perms = [...perms, ...(rel.credential.perms || [])];
       }
     }
   }
 
-  if (!info) return {};
-
-  const passport = getMatchPerm(perms, info);
+  const passport = info ? getPassport(perms, info) : perms[0] || [];
 
   if (!passport) {
     throw new ForbiddenError('Access Denied');
   }
 
-  return passport;
+  return {
+    passport,
+    user,
+    credential,
+  };
 };

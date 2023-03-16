@@ -1,6 +1,4 @@
-import bcrypt from 'bcryptjs';
 import objectPath from 'object-path';
-import { PASSWORD_SALT } from '../src/utils.js';
 
 export const db = {};
 let currentId = 0;

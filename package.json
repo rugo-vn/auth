@@ -21,7 +21,6 @@
     "@rugo-vn/exception": "^1.0.0",
     "@rugo-vn/service": "../service",
     "@rugo-vn/shared": "../shared",
-    "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^8.5.1",
     "ramda": "^0.28.0"
   }

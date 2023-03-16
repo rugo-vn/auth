@@ -39,6 +39,7 @@ export const BASE_KEY_SCHEMA = {
     data: { type: 'String' },
     hash: { type: 'String' },
     prev: { type: 'Id' },
+    user: { type: 'Id' },
   },
 };
 ```
