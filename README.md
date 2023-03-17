@@ -70,6 +70,10 @@ Return:
   - `id` user's id
   - `perms` user's permissions
 
+Notes:
+
+- When it check password in credentials, it will match the first password. So, please don't use same password between credentials.
+
 ### `gate`
 
 - Parse/check token and get user.
@@ -78,14 +82,29 @@ Return:
 Arguments:
 
 - `token`
-- `auth` Auth object for authorization.
+- `info` Auth object for authorization.
 - `perms` Default perms when user not existed.
 
 Return:
 
 - (type: `object`)
-  - `user` user info or `null`.
-  - `perms` permission extracted from token.
+
+  - `passport` remain perm's rules that not to check.
+  - `credential` current credential of token.
+  - `user` user's info of current token.
+
+### `changePassword`
+
+Arguments:
+
+- `data`
+  - `...`
+  - `currentPassword`
+  - `nextPassword`
+
+Return:
+
+- (type: `boolean`)
 
 ## License
 

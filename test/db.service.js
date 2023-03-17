@@ -18,6 +18,7 @@ export const actions = {
   async find({ tableName }) {
     return {
       data: [db[tableName][Object.keys(db[tableName])[0]]],
+      meta: { total: 1 },
     };
   },
 
