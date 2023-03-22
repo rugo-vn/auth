@@ -2,8 +2,10 @@ export const BASE_USER_SCHEMA = {
   properties: {
     credentials: {
       items: {
-        key: { type: 'Id' },
-        perms: { items: { type: 'Object' }, default: [] },
+        properties: {
+          key: { type: 'Id' },
+          perms: { items: { type: 'Object' }, default: [] },
+        },
       },
     },
   },
