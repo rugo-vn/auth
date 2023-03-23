@@ -1,12 +1,13 @@
 {
   "name": "@rugo-vn/auth",
-  "version": "2.0.6-beta.1",
+  "version": "2.0.6",
   "description": "Authentication and Authorization.",
   "main": "./src/index.js",
   "type": "module",
   "scripts": {
     "test": "mocha",
     "coverage": "c8 npm run test",
+    "publish:beta": "npm publish --access public --tag beta",
     "publish:release": "npm publish --access public"
   },
   "author": "Vu Anh Hao <hi@haova.me> (https://www.haova.me)",
@@ -19,8 +20,8 @@
   },
   "dependencies": {
     "@rugo-vn/exception": "^1.0.0",
-    "@rugo-vn/service": "../service",
-    "@rugo-vn/shared": "../shared",
+    "@rugo-vn/service": "^2.0.2",
+    "@rugo-vn/shared": "^1.0.0",
     "jsonwebtoken": "^8.5.1",
     "ramda": "^0.28.0"
   }
