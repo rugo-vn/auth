@@ -146,8 +146,21 @@ export const changePassword = async function ({ data = {} }) {
   return true;
 };
 
-export const gate = async function ({ token, info, perms = [] }) {
+export const gate = async function ({ token, apikey, info, perms = [] }) {
   let user, credential;
+
+  if (apikey) {
+    let data;
+    try {
+      data = JSON.parse(Secure.decrypt(apikey, this.secret));
+    } catch (err) {
+      throw new ForbiddenError('Wrong API Key');
+    }
+
+    token = `Bearer ${await login.bind(this)({
+      data,
+    })}`;
+  }
 
   if (token) {
     const [authType, authToken] = token.split(' ');

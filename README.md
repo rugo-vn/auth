@@ -19,6 +19,14 @@ const settings = {
 }
 ```
 
+## Api Key
+
+Called `apikey`, is a special string that allow user gain permission without sign in.
+
+How it made:
+
+`{ ...identity, password }` -> JSON -> encrypt with auth secret -> Base64 String (`apikey`).
+
 ## Default
 
 These tables should have following schema:
@@ -81,7 +89,7 @@ Notes:
 
 Arguments:
 
-- `token`
+- `token` or `apikey`
 - `info` Auth object for authorization.
 - `perms` Default perms when user not existed.
 
