@@ -1,33 +1,22 @@
-import { RugoException } from '@rugo-vn/exception';
-import { path } from 'ramda';
+import { defineAction } from '@rugo-vn/service';
+import { Secure } from '@rugo-vn/shared';
 
-export const name = 'auth';
+defineAction('register', async function ({ data }) {
+  const { email, password } = data;
 
-export * as actions from './actions.js';
+  const user = await this.call('db.create', {
+    data: { email, creds: [{ key: Secure.hashPassword(password) }] },
+  });
 
-export const started = function () {
-  this.secret = path(['settings', 'auth', 'secret'], this);
+  delete user.creds;
 
-  const spaceId = path(['settings', 'auth', 'spaceId'], this);
-  const userTable = path(['settings', 'auth', 'userTable'], this);
-  const keyTable = path(['settings', 'auth', 'keyTable'], this);
+  return { user };
+});
 
-  if (!this.secret) {
-    throw new RugoException('Auth service must have secret string in settings');
-  }
-  if (!spaceId || !userTable || !keyTable) {
-    throw new RugoException(
-      'Auth service must have spaceId, userTable and keyTable in settings'
-    );
-  }
+defineAction('login', async function ({ data }) {
+  const { email, password } = data;
 
-  this.userTable = {
-    spaceId,
-    tableName: userTable,
-  };
+  const user = (await this.call('db.find', { cond: { email } })).data[0];
 
-  this.keyTable = {
-    spaceId,
-    tableName: keyTable,
-  };
-};
+  return { user };
+});

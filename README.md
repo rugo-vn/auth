@@ -2,6 +2,14 @@
 
 Authentication and Authorization.
 
+## OAuth
+
+### Sign In with Google
+
+Follow the guide: https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid?hl=en
+
+Then put information into `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET` in `.env` file.
+
 ## Overview
 
 It requires `@rugo-vn/db`.

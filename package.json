@@ -15,12 +15,15 @@
   "devDependencies": {
     "c8": "^7.11.2",
     "chai": "^4.3.6",
+    "dotenv": "^16.0.3",
+    "googleapis": "^118.0.0",
     "mocha": "^10.0.0",
-    "object-path": "^0.11.8"
+    "object-path": "^0.11.8",
+    "open": "^9.1.0"
   },
   "dependencies": {
     "@rugo-vn/exception": "^1.0.0",
-    "@rugo-vn/service": "^2.0.2",
+    "@rugo-vn/service": "2.1.0-beta.1",
     "@rugo-vn/shared": "^1.0.0",
     "jsonwebtoken": "^8.5.1",
     "ramda": "^0.28.0"
