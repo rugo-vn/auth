@@ -10,21 +10,13 @@ Follow the guide: https://developers.google.com/identity/gsi/web/guides/get-goog
 
 Then put information into `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET` in `.env` file.
 
-## Overview
-
-It requires `@rugo-vn/db`.
-
 ## Settings
 
 ```js
 const settings = {
-  auth: {
-    secret: /* secret string, using for encrypt */,
-    spaceId: /* space id of users */,
-    userTable: /* table name of users */,
-    keyTable: /* table name of keys */,
-  }
-}
+  secret,
+  db,
+};
 ```
 
 ## Api Key
