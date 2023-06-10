@@ -15,14 +15,21 @@ defineAction('start', async function (settings) {
   if (!db) throw new Error('Auth service must have db in settings');
 });
 
-defineAction('register', async function ({ data }, { userSchema }) {
+defineAction('register', async function ({ data }, { userSchema, keySchema }) {
   const { email, password } = data;
 
-  // create user
+  // create a new key
+  const key = await this.call(
+    `${db}.create`,
+    { data: { hash: Secure.hashPassword(password) } },
+    { schema: keySchema }
+  );
+
+  // create a new user
   const user = await this.call(
     `${db}.create`,
     {
-      data: { email, creds: [{ key: Secure.hashPassword(password) }] },
+      data: { email, creds: [{ key: key.id }] },
     },
     { schema: userSchema }
   );
@@ -33,37 +40,47 @@ defineAction('register', async function ({ data }, { userSchema }) {
   return { user, token: generateToken(secret, user, perms), perms };
 });
 
-defineAction('login', async function ({ data }, { userSchema, roleSchema }) {
-  const { email, password } = data;
+defineAction(
+  'login',
+  async function ({ data }, { userSchema, keySchema, roleSchema }) {
+    const { email, password } = data;
 
-  // find user
-  const user = (
-    await this.call(`${db}.find`, { cond: { email } }, { schema: userSchema })
-  ).data[0];
-  if (!user) throw new Error('Your identity or password is wrong.');
+    // find user
+    const user = (
+      await this.call(`${db}.find`, { cond: { email } }, { schema: userSchema })
+    ).data[0];
+    if (!user) throw new Error('Your identity or password is wrong.');
 
-  // verify password
-  let cred;
-  for (const item of user.creds) {
-    if (item.key) {
-      if (Secure.comparePassword(password, item.key)) {
+    // verify password
+    let cred;
+    for (const item of user.creds) {
+      const key = (
+        await this.call(`${db}.find`, { id: item.key }, { schema: keySchema })
+      ).data[0];
+
+      if (key && Secure.comparePassword(password, key.hash)) {
         cred = item;
         break;
       }
     }
+    if (!cred) throw new Error('Your identity or password is wrong.');
+
+    // get perms
+    const perms = cred.role
+      ? (
+          await this.call(
+            `${db}.find`,
+            { id: cred.role },
+            { schema: roleSchema }
+          )
+        ).data[0]?.perms || []
+      : [];
+
+    // return
+    delete user.creds;
+    return { user, token: generateToken(secret, user, perms), perms };
   }
-  if (!cred) throw new Error('Your identity or password is wrong.');
-
-  // get perms
-  const perms = cred.role
-    ? (await this.call(`${db}.find`, { id: cred.role }, { schema: roleSchema }))
-        .data[0]?.perms || []
-    : [];
-
-  // return
-  delete user.creds;
-  return { user, token: generateToken(secret, user, perms), perms };
-});
+);
 
 defineAction('gate', async function ({ meta = {}, agent }, opts) {
   const { authorization: token = '' } = meta;
@@ -99,10 +116,10 @@ defineAction('gate', async function ({ meta = {}, agent }, opts) {
   }
 
   // validate perms
-  let valid = agent ? false : true;
+  let valid = null;
   for (const perm of perms) {
     if (verifyPerm(agent, perm)) {
-      valid = true;
+      valid = perm;
       break;
     }
   }
@@ -111,6 +128,6 @@ defineAction('gate', async function ({ meta = {}, agent }, opts) {
 
   return {
     user,
-    perms,
+    perm: valid,
   };
 });
