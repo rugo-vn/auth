@@ -2,6 +2,7 @@ import { defineAction } from '@rugo-vn/service';
 import { Secure } from '@rugo-vn/shared';
 import { generateToken, verifyToken } from './methods.js';
 import { verifyPerm } from './perm.js';
+import { forbidden } from './utils.js';
 
 let secret, db;
 
@@ -10,9 +11,9 @@ defineAction('start', async function (settings) {
   db = settings.db;
 
   if (!secret)
-    throw new Error('Auth service must have secret string in settings');
+    throw forbidden('Auth service must have secret string in settings');
 
-  if (!db) throw new Error('Auth service must have db in settings');
+  if (!db) throw forbidden('Auth service must have db in settings');
 });
 
 defineAction('register', async function ({ data }, { userSchema, keySchema }) {
@@ -45,11 +46,14 @@ defineAction(
   async function ({ data }, { userSchema, keySchema, roleSchema }) {
     const { email, password } = data;
 
+    if (!email || !password)
+      throw forbidden('Your identity or password is wrong.');
+
     // find user
     const user = (
       await this.call(`${db}.find`, { cond: { email } }, { schema: userSchema })
     ).data[0];
-    if (!user) throw new Error('Your identity or password is wrong.');
+    if (!user) throw forbidden('Your identity or password is wrong.');
 
     // verify password
     let cred;
@@ -63,7 +67,7 @@ defineAction(
         break;
       }
     }
-    if (!cred) throw new Error('Your identity or password is wrong.');
+    if (!cred) throw forbidden('Your identity or password is wrong.');
 
     // get perms
     const perms = cred.role
@@ -103,15 +107,15 @@ defineAction('gate', async function ({ meta = {}, agent }, opts) {
         )
       ).data[0];
 
-      if (!user) throw new Error('User is not exist');
+      if (!user) throw forbidden('User is not exist');
       delete user.creds;
 
       if (rel.version !== user.version)
-        throw new Error('Your session is expired. Please sign in again.');
+        throw forbidden('Your session is expired. Please sign in again.');
 
       perms = [...perms, ...rel.perms];
     } else {
-      throw new Error('Wrong token. Please sign in again.');
+      throw forbidden('Wrong token. Please sign in again.');
     }
   }
 
@@ -124,7 +128,7 @@ defineAction('gate', async function ({ meta = {}, agent }, opts) {
     }
   }
 
-  if (!valid) throw new Error('Access Denied');
+  if (!valid) throw forbidden('Access Denied');
 
   return {
     user,

@@ -1,3 +1,4 @@
+import { HttpResponse } from '@rugo-vn/service/src/classes.js';
 import jwt from 'jsonwebtoken';
 
 export const PASSWORD_SALT = 10;
@@ -39,3 +40,7 @@ export const validatePerm = (metaPerm, perms) => {
 
   return false;
 };
+
+export function forbidden(msg) {
+  return new HttpResponse({ status: 403, body: msg });
+}

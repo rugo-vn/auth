@@ -1,8 +1,8 @@
 import { spawnService } from '@rugo-vn/service';
+import { HttpResponse } from '@rugo-vn/service/src/classes.js';
 import { pack } from '@rugo-vn/service/src/wrap.js';
-import { Secure } from '@rugo-vn/shared';
 import { hashPassword } from '@rugo-vn/shared/src/secure.js';
-import { expect } from 'chai';
+import { assert, expect } from 'chai';
 import { generateToken } from '../src/methods.js';
 
 const OPTS = {
@@ -114,6 +114,23 @@ describe('Auth service test', function () {
     expect(user).to.not.has.property('creds');
     expect(token).to.be.not.eq(undefined);
     expect(perms).to.be.deep.eq([{ a: 1, b: '+', c: '*' }]);
+  });
+
+  it('should not login', async () => {
+    const form = { email: 'sample@rugo.vn', password: 'wrongpass' };
+
+    try {
+      await service.call(
+        'login',
+        {
+          data: form,
+        },
+        OPTS
+      );
+      assert.fail('should error');
+    } catch (err) {
+      expect(err instanceof HttpResponse).to.be.eq(true);
+    }
   });
 
   it('should gate', async () => {
