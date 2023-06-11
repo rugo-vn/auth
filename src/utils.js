@@ -42,5 +42,5 @@ export const validatePerm = (metaPerm, perms) => {
 };
 
 export function forbidden(msg) {
-  return new HttpResponse({ status: 403, body: msg });
+  return new HttpResponse({ status: 403, body: { error: msg } });
 }
